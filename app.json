@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "HelloWorld",
+    "slug": "rider",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/Splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.company.hopin",
+      "config": {
+        "googleMapsApiKey": "AIzaSyDDGCRsdawsguNpqCvTI-zlgCBDz2H8zVY"
+      }
+    },
+    "android": {
+      "package": "com.company.hopin",
+      "config": {
+        "googleMaps": {
+          "apiKey": "<android maps key>"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
