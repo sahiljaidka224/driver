@@ -1,8 +1,7 @@
-import * as SecureStore from "expo-secure-store";
-
 import { ApolloProvider } from "@apollo/react-hooks";
 import { AppLoading } from "expo";
 import { BookingScreen } from "./src/components/BookScreen";
+import { DocumentsView } from "./src/components/documents";
 import { DrawerComp } from "./src/components/drawer";
 import { EnableNotifications } from "./src/components/EnableNotification";
 import { EnterDestinationScreen } from "./src/components/enter-destination";
@@ -40,7 +39,6 @@ const MainStackScreen = () => {
       <MainStack.Screen
         name="EnterPhoneNumber"
         component={EnterPhoneNumber}
-        // component={AuthedViews}
         options={{ headerShown: false }}
       />
       <MainStack.Screen
@@ -64,6 +62,7 @@ const AuthedViews = () => {
       drawerContent={(props) => <DrawerComp {...props} name="Pedro" />}
     >
       <Drawer.Screen name="BookingScreen" component={BookingScreen} />
+      <Drawer.Screen name="Documents" component={DocumentsView} />
     </Drawer.Navigator>
   );
 };
@@ -72,7 +71,7 @@ export default function App() {
   const [auth, updateAuth] = React.useState(false);
   const [checkedSignedIn, updateCheckedSignedIn] = React.useState(false);
   const signedIn = isSignedIn()
-    .then((res) => {
+    .then((res: any) => {
       updateAuth(res);
       updateCheckedSignedIn(true);
     })
@@ -86,7 +85,6 @@ export default function App() {
     return <AppLoading />;
   }
 
-  console.log({ auth });
   return (
     <ApolloProvider client={client}>
       <Provider value={overmind}>

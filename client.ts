@@ -1,25 +1,45 @@
 import ApolloClient from "apollo-client";
-import { HttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { WebSocketLink } from "apollo-link-ws";
+import { createUploadLink } from "apollo-upload-client";
 import { getMainDefinition } from "apollo-utilities";
+import { getToken } from "./auth";
+import { setContext } from "@apollo/client/link/context";
 import { split } from "apollo-link";
 
-const httpLink = new HttpLink({
+const httpLink = createUploadLink({
   uri: "http://192.168.0.45:4000/graphql",
   //   uri: "http://172.20.10.4:4000/graphql/",
 });
+
+const authLink = setContext(async (_, { headers }) => {
+  // get the authentication token from local storage if it exists
+  const token = await getToken();
+
+  // return the headers to the context so httpLink can read them
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+    },
+  };
+});
+
+const authorizedLink = authLink.concat(httpLink as any);
 
 const wsLink = new WebSocketLink({
   uri: `ws://192.168.0.45:4000/graphql`,
   options: {
     reconnect: true,
     lazy: true,
+    connectionParams: async () => ({
+      authorization: `Bearer ${await getToken()}`,
+    }),
   },
-  //   connectionParams: {
-  //     authToken: user.authToken,
-  //   },
 });
+
+
+
 
 const link = split(
   ({ query }) => {
@@ -30,7 +50,7 @@ const link = split(
     );
   },
   wsLink,
-  httpLink
+  authorizedLink as any
 );
 
 const cache = new InMemoryCache();

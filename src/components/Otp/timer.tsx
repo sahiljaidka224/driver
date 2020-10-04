@@ -3,6 +3,7 @@ import { Animated, TouchableOpacity } from "react-native";
 import { Color } from "../../constants/Theme";
 import { MutationFunction } from "@apollo/react-hooks";
 import React from "react";
+import { iphone6OrGreater } from "../../utils/device-info";
 import styled from "styled-components/native";
 
 type TimerProps = {
@@ -24,7 +25,7 @@ const ResendButton = styled(TouchableOpacity)`
 const Wrapper = styled.View`
   display: flex;
   flex-direction: row;
-  width: 100%;
+  width: ${iphone6OrGreater() ? "92%" : "100%"};
   align-items: center;
   padding-left: 10px;
 `;

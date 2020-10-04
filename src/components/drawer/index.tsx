@@ -45,21 +45,49 @@ const MenuWrapper = styled.View`
   margin-top: 10px;
 `;
 
+const SignOutWrapper = styled.TouchableOpacity`
+  background: #e5e5e5;
+  height: 50px;
+  justify-content: center;
+  max-width: 40%;
+  margin-left: 25px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  align-items: center;
+`;
+
+const SignOutText = styled.Text`
+  font-family: "SFPro-Regular";
+  font-size: 18px;
+  color: ${Color.Text.Normal.Color};
+`;
+
 const optionsList = [
   {
-    title: "Your trips",
+    title: "Your rides",
+    id: "1",
+    screen: "YourRides",
   },
   {
     title: "Payment",
+    id: "2",
+    screen: "PaymentsView",
   },
   {
     title: "Settings",
+    id: "3",
+    screen: "EditAccount",
   },
 ];
 
 type Props = DrawerProps & NavigationProp<any, any>;
 
 export const DrawerComp: React.FC<Props> = (props) => {
+  const onSignoutPress = () => {
+    setToken("");
+    props.navigation.replace("Main");
+  };
+
   return (
     <Container>
       <ImageWrapper source={Icons.driverDefault} resizeMode="contain" />
@@ -67,19 +95,24 @@ export const DrawerComp: React.FC<Props> = (props) => {
       <Name>Pedro</Name>
       <MenuWrapper>
         {optionsList.map((ol) => {
-          const { title } = ol;
+          const { title, id, screen } = ol;
           return (
             <DrawerItem
+              key={id}
               label={title}
               onPress={() => {
-                //   props.navigation.navigate("EnterPhoneNumber")
-
+                props.navigation.navigate(screen);
               }}
               labelStyle={styles.list}
+              activeBackgroundColor="red"
+              inactiveBackgroundColor="white"
             />
           );
         })}
       </MenuWrapper>
+      <SignOutWrapper onPress={onSignoutPress}>
+        <SignOutText>Sign out</SignOutText>
+      </SignOutWrapper>
     </Container>
   );
 };

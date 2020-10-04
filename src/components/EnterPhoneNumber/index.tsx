@@ -50,7 +50,7 @@ const PhoneNumberInput = styled(TextInput)`
 
 export const NextButtonWrapper = styled(View)`
   align-items: center;
-  width: ${iphone6OrGreater() ? "90%" : "80%"};
+  width: ${iphone6OrGreater() ? "84%" : "80%"};
   justify-content: space-between;
   display: flex;
   margin: ${iphone6OrGreater() ? "10px" : "0"};
@@ -98,7 +98,7 @@ export const EnterPhoneNumber: React.FC<EnterPhoneNumberProps> = ({
     onCompleted: (completedData) => {
       navigation.navigate("OtpScreen", {
         number: value,
-        id: completedData.createUser._id, // TODO: fix this
+        id: completedData.createDriver._id,
       });
     },
   });

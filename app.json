@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "HelloWorld",
-    "slug": "rider",
+    "name": "Hopin-driver",
+    "slug": "driver",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,13 +18,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.company.hopin",
+      "bundleIdentifier": "com.company.hopin.driver",
       "config": {
         "googleMapsApiKey": "AIzaSyDDGCRsdawsguNpqCvTI-zlgCBDz2H8zVY"
       }
     },
     "android": {
-      "package": "com.company.hopin",
+      "package": "com.company.hopin.driver",
       "config": {
         "googleMaps": {
           "apiKey": "<android maps key>"
