@@ -14,6 +14,7 @@ export enum ScreenState {
   DRIVER_ARRIVED,
   CANCELLED,
   COMPLETED,
+  BOOKING_RECEIVED
 }
 
 type State = {

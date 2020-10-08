@@ -5,7 +5,7 @@ import { Icons } from "../../../constants/icons";
 import React from "react";
 import styled from "styled-components/native";
 
-interface DriverDetailsProps {
+interface CustomerDetailsProps {
   name: string;
   carName?: string;
   phone: string;
@@ -14,6 +14,7 @@ interface DriverDetailsProps {
 
 const Container = styled.View`
   padding: 20px;
+  width: 100%;
 `;
 
 const Wrapper = styled.View`
@@ -91,7 +92,7 @@ const CancelText = styled.Text`
   color: #0e1823;
 `;
 
-export const DriverDetails: React.FC<DriverDetailsProps> = ({
+export const CustomerView: React.FC<CustomerDetailsProps> = ({
   name,
   carName = "Toyota Camry",
   phone = "0475431313",

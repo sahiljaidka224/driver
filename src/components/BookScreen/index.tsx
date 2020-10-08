@@ -8,31 +8,24 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import React, { useRef, useState } from "react";
 import {
   SUBSCRIBE_TO_BOOKING,
   UPDATE_EXPO_PUSHTOKEN,
 } from "./queriesAndMutations";
-import {
-  useLazyQuery,
-  useMutation,
-  useSubscription,
-} from "@apollo/react-hooks";
+import { useMutation, useSubscription } from "@apollo/react-hooks";
 
+import { AnimatedBottomView } from "./components/animated-bottom-view";
 import { BookingNotification } from "./components/booking-notification";
+import { BookingView } from "./components/booking-view";
 import { Color } from "../../constants/Theme";
-import { GET_TRIPPRICE_BASEDON_LOCATION } from "../enter-destination/queriesAndMutations";
 import { Icons } from "../../constants/icons";
-import { InitalView } from "./components/initial-view";
 import { MenuButton } from "../Common/MenuButton";
 import { NavigationProp } from "@react-navigation/native";
-import { Point } from "react-native-google-places-autocomplete";
-import { RoutesView } from "./components/routes-view";
 import { ScreenState } from "../../../overmind/state";
-import { getAddressFromLatLong } from "../../utils/address-based-on-latlng";
+import { StatusBar } from "expo-status-bar";
 import { getPolyline } from "../../utils/polyline";
-import { getReadableAddress } from "../../utils/get-readable-address";
 import { mapStyle } from "../../constants/MapStyle";
 import styled from "styled-components/native";
 import { useOvermind } from "../../../overmind";
@@ -136,7 +129,8 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const mapRef = useRef<MapView>(null);
   const notificationListener = useRef<Subscription>();
   const responseListener = useRef<Subscription>();
-
+  const { state, actions } = useOvermind();
+  const { bookingScreenState } = state;
   const [updateExpoPushToken] = useMutation(UPDATE_EXPO_PUSHTOKEN);
 
   const { data: newBookingData, loading, error } = useSubscription(
@@ -166,6 +160,8 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 animated: true,
               });
             }
+
+            actions.updateBookingScreenState(ScreenState.BOOKING_RECEIVED);
           }
         }
       },
@@ -312,18 +308,27 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               );
             }
           })}
-        {coords && coords.length > 1 && (
+        {/* {coords && coords.length > 1 && (
           <Polyline
             key={Math.random()}
             strokeWidth={4}
             strokeColor="#2ECB70"
             coordinates={coords ? coords : []}
           />
-        )}
+        )} */}
       </Map>
+      {bookingScreenState === ScreenState.DRIVER_ASSIGNED && (
+        <WhereToWrapper>
+          <BookingView
+            bookingId={newBookingData.bookingCreated.id}
+            updateRoute={() => {}}
+          />
+        </WhereToWrapper>
+      )}
       {newBookingData &&
         newBookingData.bookingCreated &&
-        newBookingData.bookingCreated.id && (
+        newBookingData.bookingCreated.id &&
+        bookingScreenState === ScreenState.BOOKING_RECEIVED && (
           <BookingNotification
             bookingId={newBookingData.bookingCreated.id}
             sourceAddress={newBookingData.bookingCreated.sourceAddress}
@@ -340,6 +345,8 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           />
         }
       </MenuButtonWrapper>
+      {bookingScreenState === ScreenState.INITIAL && <AnimatedBottomView />}
+      <StatusBar style="auto" />
     </BackgroundView>
   );
 };
