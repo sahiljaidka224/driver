@@ -9,7 +9,7 @@ interface CustomerDetailsProps {
   name: string;
   carName?: string;
   phone: string;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
 const Container = styled.View`
@@ -94,12 +94,16 @@ const CancelText = styled.Text`
 
 export const CustomerView: React.FC<CustomerDetailsProps> = ({
   name,
-  carName = "Toyota Camry",
-  phone = "0475431313",
+  carName = "",
+  phone = "",
   onCancel,
 }) => {
   const onPress = () => {
-    Linking.openURL(`tel:${phone.replace(/-/g, "")}`);
+    if (phone && phone.replace(/-/g, "").length > 0) {
+      Linking.openURL(`tel:${phone.replace(/-/g, "")}`);
+    } else {
+        alert("Network error, Please try again later!")
+    }
   };
   return (
     <Container>
@@ -113,11 +117,13 @@ export const CustomerView: React.FC<CustomerDetailsProps> = ({
           <CallImage source={Icons.call} resizeMode="contain" />
         </CallWrapper>
       </Wrapper>
-      <CancelWrapper>
-        <CancelButton onPress={onCancel}>
-          <CancelText>Abort</CancelText>
-        </CancelButton>
-      </CancelWrapper>
+      {onCancel && (
+        <CancelWrapper>
+          <CancelButton onPress={onCancel}>
+            <CancelText>Abort</CancelText>
+          </CancelButton>
+        </CancelWrapper>
+      )}
     </Container>
   );
 };

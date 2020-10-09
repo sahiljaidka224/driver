@@ -4,13 +4,16 @@ import {
   TouchableOpacity,
   Vibration,
 } from "react-native";
+import {
+  BookingState,
+  CurrentBooking,
+} from "../../../../overmind/state";
 import { DRIVER_DECLINE_BOOKING, UPDATE_BOOKING } from "../queriesAndMutations";
 import React, { useEffect } from "react";
 
 import { Color } from "../../../constants/Theme";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { FontAwesome } from "@expo/vector-icons";
-import { ScreenState } from "../../../../overmind/state";
 import styled from "styled-components/native";
 import { useMutation } from "@apollo/react-hooks";
 import { useOvermind } from "../../../../overmind";
@@ -83,7 +86,6 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
   bookingType,
 }) => {
   const [seconds, updateSeconds] = React.useState(TIMER_VALUE);
-
   const { actions } = useOvermind();
 
   const [
@@ -94,7 +96,7 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
       const { driverDeclineBooking } = completedData;
 
       if (driverDeclineBooking) {
-        actions.updateBookingScreenState(ScreenState.INITIAL);
+        actions.updateCurrentBooking(undefined);
       }
     },
   });
@@ -104,9 +106,32 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
       const { driverUpdateBooking } = completedData;
       if (!driverUpdateBooking) return;
 
-      const { status, sourceLatLng } = driverUpdateBooking;
-      if (status === "DRIVER_ASSIGNED") {
-        actions.updateBookingScreenState(ScreenState.DRIVER_ASSIGNED);
+      const {
+        status,
+        sourceLatLng,
+        bookingId,
+        source,
+        destAddress,
+        destLatLng,
+        type,
+      } = driverUpdateBooking;
+      const currentStatus = BookingState.DRIVER_ASSIGNED;
+
+      if (bookingId) {
+        const currentBook: CurrentBooking = {
+          id: bookingId,
+          sourceAddress: {
+            readable: source,
+            location: sourceLatLng,
+          },
+          destinationAddress: {
+            readable: destAddress,
+            location: destLatLng,
+          },
+          type: type,
+          status: currentStatus,
+        };
+        actions.updateCurrentBooking(currentBook);
       }
     },
   });
@@ -131,14 +156,16 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
   }, [seconds]);
 
   const onTimerComplete = () => {
-    declineBooking({
-      variables: { bookingId },
-    });
+    if (bookingId) {
+      declineBooking({
+        variables: { bookingId },
+      });
+    }
   };
 
   return (
     <BackgroundView>
-      <IconWrapper onPress={() => console.log("presssed")}>
+      <IconWrapper onPress={onTimerComplete}>
         <FontAwesome name="times-circle" size={66} />
       </IconWrapper>
       {loading || declineBookingLoading ? (

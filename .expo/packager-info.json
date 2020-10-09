@@ -1,10 +1,10 @@
 {
-  "devToolsPort": 19002,
-  "expoServerPort": 19000,
-  "packagerPort": 19001,
-  "packagerPid": 1244,
-  "expoServerNgrokUrl": "https://28-p6w.sjaidka224.driver.exp.direct",
-  "packagerNgrokUrl": "https://packager.28-p6w.sjaidka224.driver.exp.direct",
-  "ngrokPid": 1306,
+  "devToolsPort": 19003,
+  "expoServerPort": 19004,
+  "packagerPort": 19005,
+  "packagerPid": 15467,
+  "expoServerNgrokUrl": "https://ha-w8x.sjaidka224.driver.exp.direct",
+  "packagerNgrokUrl": "https://packager.ha-w8x.sjaidka224.driver.exp.direct",
+  "ngrokPid": 15487,
   "webpackServerPort": null
 }

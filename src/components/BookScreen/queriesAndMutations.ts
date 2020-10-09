@@ -30,6 +30,7 @@ export const UPDATE_BOOKING = gql`
         lat
         lng
       }
+      type
       destAddress
       destLatLng {
         lat
