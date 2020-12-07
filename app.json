@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Hopin-driver",
-    "slug": "driver",
+    "name": "Hopinn Driver",
+    "slug": "hopin-rider",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,13 +18,21 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.company.hopin.driver",
+      "bundleIdentifier": "com.company.hopinnDriver",
       "config": {
         "googleMapsApiKey": "AIzaSyDDGCRsdawsguNpqCvTI-zlgCBDz2H8zVY"
+      },
+      "infoPlist": {
+          "NSLocationUsageDescription": "Hopinn collects location data to make sure a faultless and express ride.","NSLocationAlwaysAndWhenInUseUsageDescription": "Hopinn collects location data to make sure a faultless and express ride.",
+          "NSLocationWhenInUseUsageDescription": "Hopinn collects location data to make sure a faultless and express ride.",
+          "UIBackgroundModes": [
+            "location",
+            "fetch"
+        ]
       }
     },
     "android": {
-      "package": "com.company.hopin.driver",
+      "package": "com.company.hopinnDriver",
       "config": {
         "googleMaps": {
           "apiKey": "<android maps key>"

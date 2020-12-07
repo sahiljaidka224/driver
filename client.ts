@@ -7,7 +7,7 @@ import { getToken } from "./auth";
 import { setContext } from "@apollo/client/link/context";
 import { split } from "apollo-link";
 
-const URI = "http://192.168.0.47:4000/";
+const URI = "http://192.168.0.45:4000/";
 
 const httpLink = createUploadLink({
   uri: `${URI}graphql`,
@@ -30,7 +30,7 @@ const authLink = setContext(async (_, { headers }) => {
 const authorizedLink = authLink.concat(httpLink as any);
 
 const wsLink = new WebSocketLink({
-  uri: `ws://192.168.0.47:4000/graphql`,
+  uri: `ws://192.168.0.45:4000/graphql`,
   options: {
     reconnect: true,
     lazy: true,
@@ -39,9 +39,6 @@ const wsLink = new WebSocketLink({
     }),
   },
 });
-
-
-
 
 const link = split(
   ({ query }) => {

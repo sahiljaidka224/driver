@@ -4,14 +4,12 @@ import {
   TouchableOpacity,
   Vibration,
 } from "react-native";
-import {
-  BookingState,
-  CurrentBooking,
-} from "../../../../overmind/state";
+import { BookingState, CurrentBooking } from "../../../../overmind/state";
 import { DRIVER_DECLINE_BOOKING, UPDATE_BOOKING } from "../queriesAndMutations";
 import React, { useEffect } from "react";
 
 import { Color } from "../../../constants/Theme";
+import { Coords } from "..";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { FontAwesome } from "@expo/vector-icons";
 import styled from "styled-components/native";
@@ -20,9 +18,7 @@ import { useOvermind } from "../../../../overmind";
 
 type BookingNotificationProps = {
   bookingId: string;
-  destAdress: string;
-  sourceAddress: string;
-  bookingType: string;
+  onCancel: (coords: [Coords] | undefined) => void;
 };
 
 const BackgroundView = styled.View`
@@ -81,12 +77,12 @@ const TIMER_VALUE = 15;
 
 export const BookingNotification: React.FC<BookingNotificationProps> = ({
   bookingId,
-  destAdress,
-  sourceAddress,
-  bookingType,
+  onCancel,
 }) => {
   const [seconds, updateSeconds] = React.useState(TIMER_VALUE);
-  const { actions } = useOvermind();
+  const { actions, state } = useOvermind();
+
+  const { currentBooking } = state;
 
   const [
     declineBooking,
@@ -99,9 +95,11 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
         actions.updateCurrentBooking(undefined);
       }
     },
+    fetchPolicy: "no-cache",
   });
 
   const [updatebooking, { loading, error }] = useMutation(UPDATE_BOOKING, {
+    fetchPolicy: "no-cache",
     onCompleted: (completedData) => {
       const { driverUpdateBooking } = completedData;
       if (!driverUpdateBooking) return;
@@ -157,6 +155,7 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
 
   const onTimerComplete = () => {
     if (bookingId) {
+      onCancel(undefined);
       declineBooking({
         variables: { bookingId },
       });
@@ -193,16 +192,27 @@ export const BookingNotification: React.FC<BookingNotificationProps> = ({
           seconds % 2 === 0 ? `${Color.Button.Background}` : "#e5e5e5"
         }
       >
-        <Info>Tap to accept this {bookingType.toLowerCase()}</Info>
-        {sourceAddress ? (
-          <Address numberOfLines={1}>{sourceAddress}</Address>
-        ) : null}
-        {sourceAddress && destAdress ? (
-          <MapIconWrapper>
-            <FontAwesome name="map-signs" size={34} color="red" />
-          </MapIconWrapper>
-        ) : null}
-        {destAdress ? <Address numberOfLines={1}>{destAdress}</Address> : null}
+        {currentBooking && (
+          <>
+            <Info>Tap to accept this {currentBooking?.type.toLowerCase()}</Info>
+            {currentBooking?.sourceAddress.readable ? (
+              <Address numberOfLines={1}>
+                {currentBooking?.sourceAddress.readable}
+              </Address>
+            ) : null}
+            {currentBooking?.sourceAddress &&
+            currentBooking?.destinationAddress ? (
+              <MapIconWrapper>
+                <FontAwesome name="map-signs" size={34} color="red" />
+              </MapIconWrapper>
+            ) : null}
+            {currentBooking?.destinationAddress.readable ? (
+              <Address numberOfLines={1}>
+                {currentBooking?.destinationAddress.readable}
+              </Address>
+            ) : null}
+          </>
+        )}
       </BottomView>
     </BackgroundView>
   );

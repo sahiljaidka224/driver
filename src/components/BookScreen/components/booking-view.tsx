@@ -6,6 +6,7 @@ import {
 } from "../queriesAndMutations";
 import { BookingState, CurrentBooking } from "../../../../overmind/state";
 import { Feather, FontAwesome } from "@expo/vector-icons";
+import { getCurrentLocation, getPolyline } from "../../../utils/polyline";
 import { useMutation, useQuery, useSubscription } from "@apollo/react-hooks";
 
 import { Color } from "../../../constants/Theme";
@@ -18,7 +19,7 @@ import { useOvermind } from "../../../../overmind";
 
 type BookingViewProps = {
   bookingId: string;
-  updateRoute: (coordinates: [Coords]) => void;
+  updateRoute: (coordinates: [Coords] | undefined) => void;
 };
 
 const CurrentLocationView = styled.TouchableOpacity`
@@ -60,12 +61,6 @@ const IconTextWrapper = styled.View`
   align-items: center;
 `;
 
-const SwipeableButtonWrapper = styled.View`
-  width: 90%;
-  height: 50px;
-  border-radius: 10px;
-`;
-
 export const BookingView: React.FC<BookingViewProps> = ({
   bookingId,
   updateRoute,
@@ -92,7 +87,7 @@ export const BookingView: React.FC<BookingViewProps> = ({
     updatebooking,
     { loading: updateBookingLoading, error: updateBookingErr },
   ] = useMutation(UPDATE_BOOKING, {
-    onCompleted: (completedData) => {
+    onCompleted: async (completedData) => {
       const { driverUpdateBooking } = completedData;
 
       if (!driverUpdateBooking) return;
@@ -108,6 +103,7 @@ export const BookingView: React.FC<BookingViewProps> = ({
       } = driverUpdateBooking;
       if (getStatusBasedOnStr(status) === BookingState.COMPLETED) {
         actions.updateCurrentBooking(undefined);
+        updateRoute(undefined);
       } else {
         if (bookingId) {
           const currentBook: CurrentBooking = {
@@ -123,6 +119,16 @@ export const BookingView: React.FC<BookingViewProps> = ({
             type: type,
             status: getStatusBasedOnStr(status),
           };
+
+          const currentLocation = await getCurrentLocation();
+          const destLocation =
+            getStatusBasedOnStr(status) === BookingState.DRIVER_ASSIGNED
+              ? sourceLatLng
+              : destLatLng;
+
+          const coordinates = await getPolyline(currentLocation, destLocation);
+          updateRoute(coordinates);
+
           actions.updateCurrentBooking(currentBook);
         }
       }
@@ -201,23 +207,23 @@ export const BookingView: React.FC<BookingViewProps> = ({
     return currentStatus;
   };
 
-  const getStringStatus = (): string => {
+  const getStringStatus = (toShow = false): string => {
     const nextStatus = getNextStatus();
 
     if (!nextStatus) return "";
     let nextStatusStr = "DRIVER_ASSIGNED";
     switch (nextStatus) {
       case BookingState.DRIVER_ASSIGNED:
-        nextStatusStr = "DRIVER_ASSIGNED";
+        nextStatusStr = toShow ? "assigned" : "DRIVER_ASSIGNED";
         break;
       case BookingState.DRIVER_ARRIVED:
-        nextStatusStr = "DRIVER_ARRIVED";
+        nextStatusStr = toShow ? "arrive" : "DRIVER_ARRIVED";
         break;
       case BookingState.STARTED:
-        nextStatusStr = "STARTED";
+        nextStatusStr = toShow ? "start" : "STARTED";
         break;
       case BookingState.COMPLETED:
-        nextStatusStr = "COMPLETED";
+        nextStatusStr = toShow ? "complete" : "COMPLETED";
         break;
       default:
         nextStatusStr = "DRIVER_ARRIVED";
@@ -229,9 +235,17 @@ export const BookingView: React.FC<BookingViewProps> = ({
 
   const onOpenMaps = () => {
     if (!currentBooking) return;
-    const { sourceAddress } = currentBooking;
-    const { location } = sourceAddress;
-    let daddr = encodeURIComponent(`${location.lat}, ${location.lng}`);
+
+    const { sourceAddress, destinationAddress, status } = currentBooking;
+    let daddr;
+    if (status === BookingState.DRIVER_ASSIGNED) {
+      const { location } = sourceAddress;
+      daddr = encodeURIComponent(`${location.lat}, ${location.lng}`);
+    } else {
+      const { location } = destinationAddress;
+      daddr = encodeURIComponent(`${location.lat}, ${location.lng}`);
+    }
+
     Linking.openURL(`http://maps.google.com/?daddr=${daddr}`);
   };
 
@@ -261,9 +275,7 @@ export const BookingView: React.FC<BookingViewProps> = ({
           ) : (
             <SwipeableButton
               onSuccess={onUpdate}
-              defaultText={
-                getStringStatus() ? `Swipe right to ${getStringStatus()}` : ""
-              }
+              defaultText={`Swipe right to ${getStringStatus(true)}`}
             />
           )}
         </>

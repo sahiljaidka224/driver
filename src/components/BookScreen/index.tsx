@@ -3,36 +3,40 @@ import * as Notifications from "expo-notifications";
 import * as Permissions from "expo-permissions";
 
 import { BookingState, CurrentBooking } from "../../../overmind/state";
-import {
-  Dimensions,
-  Platform,
-  SafeAreaView,
-  TouchableOpacity,
-} from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { Dimensions, Platform, SafeAreaView } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 import React, { useRef, useState } from "react";
-import {
-  SUBSCRIBE_TO_BOOKING,
-  UPDATE_EXPO_PUSHTOKEN,
-} from "./queriesAndMutations";
-import { useMutation, useSubscription } from "@apollo/react-hooks";
 
 import { AnimatedBottomView } from "./components/animated-bottom-view";
 import { BookingNotification } from "./components/booking-notification";
 import { BookingView } from "./components/booking-view";
 import { Color } from "../../constants/Theme";
 import { CurrentLocation } from "./components/current-location";
+import { FontAwesome } from "@expo/vector-icons";
 import { Icons } from "../../constants/icons";
 import { MenuButton } from "../Common/MenuButton";
 import { NavigationProp } from "@react-navigation/native";
+import { Point } from "react-native-google-places-autocomplete";
 import { StatusBar } from "expo-status-bar";
+import { UPDATE_EXPO_PUSHTOKEN } from "./queriesAndMutations";
 import { getPolyline } from "../../utils/polyline";
 import { mapStyle } from "../../constants/MapStyle";
 import styled from "styled-components/native";
+import { useMutation } from "@apollo/react-hooks";
 import { useOvermind } from "../../../overmind";
 
 type Subscription = {
   remove: () => void;
+};
+
+type BookingData = {
+  id: string;
+  destAddress: string;
+  destLatLng: Point;
+  sourceAddress: string;
+  sourceLatLng: Point;
+  status: string;
+  type: string;
 };
 
 interface BookingScreenProps {
@@ -89,63 +93,6 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const { state, actions } = useOvermind();
   const { currentBooking } = state;
   const [updateExpoPushToken] = useMutation(UPDATE_EXPO_PUSHTOKEN);
-
-  const { data: newBookingData, loading, error } = useSubscription(
-    SUBSCRIBE_TO_BOOKING,
-    {
-      onSubscriptionData: async ({ subscriptionData }) => {
-        if (subscriptionData.data) {
-          console.log({ subscriptionData });
-          const { bookingCreated } = subscriptionData.data;
-
-          if (!bookingCreated) return;
-
-          const {
-            sourceLatLng,
-            destLatLng,
-            id,
-            sourceAddress,
-            destAddress,
-            type,
-          } = bookingCreated;
-
-          if (id) {
-            const currentBook: CurrentBooking = {
-              id: id,
-              sourceAddress: {
-                readable: sourceAddress,
-                location: sourceLatLng,
-              },
-              destinationAddress: {
-                readable: destAddress,
-                location: destLatLng,
-              },
-              type: type,
-              status: BookingState.REQUESTED,
-            };
-            actions.updateCurrentBooking(currentBook);
-          }
-
-          if (sourceLatLng && destLatLng) {
-            const coordinates = await getPolyline(sourceLatLng, destLatLng);
-            updateCoords(coordinates);
-
-            if (mapRef && coordinates && coordinates.length > 1) {
-              mapRef.current?.fitToCoordinates(coordinates, {
-                edgePadding: {
-                  top: 20,
-                  right: 20,
-                  bottom: 250,
-                  left: 20,
-                },
-                animated: true,
-              });
-            }
-          }
-        }
-      },
-    }
-  );
 
   const getPushNotificationsPermissions = async () => {
     const { status: existingStatus } = await Permissions.getAsync(
@@ -218,6 +165,51 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     });
   };
 
+  const notificationReceived = async (bookingData: BookingData) => {
+    const {
+      sourceLatLng,
+      destLatLng,
+      id,
+      sourceAddress,
+      destAddress,
+      type,
+    } = bookingData;
+
+    if (id) {
+      const currentBook: CurrentBooking = {
+        id: id,
+        sourceAddress: {
+          readable: sourceAddress,
+          location: sourceLatLng,
+        },
+        destinationAddress: {
+          readable: destAddress,
+          location: destLatLng,
+        },
+        type: type,
+        status: BookingState.REQUESTED,
+      };
+      actions.updateCurrentBooking(currentBook);
+    }
+
+    if (sourceLatLng && destLatLng) {
+      const coordinates = await getPolyline(sourceLatLng, destLatLng);
+      updateCoords(coordinates);
+
+      if (mapRef && coordinates && coordinates.length > 1) {
+        mapRef.current?.fitToCoordinates(coordinates, {
+          edgePadding: {
+            top: 20,
+            right: 20,
+            bottom: 250,
+            left: 20,
+          },
+          animated: true,
+        });
+      }
+    }
+  };
+
   React.useEffect(() => {
     getLocationPermission();
     getPushNotificationsPermissions();
@@ -225,8 +217,7 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     // This listener is fired whenever a notification is received while the app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener(
       async (notification) => {
-        console.log({ notification });
-        if (notification) {
+        if (notification && !currentBooking) {
           if (!notification.request) return;
 
           if (!notification.request.content) return;
@@ -238,48 +229,7 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
           const { bookingData } = data.body;
 
-          const {
-            sourceLatLng,
-            destLatLng,
-            id,
-            sourceAddress,
-            destAddress,
-            type,
-          } = bookingData;
-
-          if (id) {
-            const currentBook: CurrentBooking = {
-              id: id,
-              sourceAddress: {
-                readable: sourceAddress,
-                location: sourceLatLng,
-              },
-              destinationAddress: {
-                readable: destAddress,
-                location: destLatLng,
-              },
-              type: type,
-              status: BookingState.REQUESTED,
-            };
-            actions.updateCurrentBooking(currentBook);
-          }
-
-          if (sourceLatLng && destLatLng) {
-            const coordinates = await getPolyline(sourceLatLng, destLatLng);
-            updateCoords(coordinates);
-
-            if (mapRef && coordinates && coordinates.length > 1) {
-              mapRef.current?.fitToCoordinates(coordinates, {
-                edgePadding: {
-                  top: 20,
-                  right: 20,
-                  bottom: 250,
-                  left: 20,
-                },
-                animated: true,
-              });
-            }
-          }
+          notificationReceived(bookingData);
         }
       }
     );
@@ -287,7 +237,25 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        console.log({ response });
+        if (currentBooking || !response) return;
+
+        if (
+          !response.notification ||
+          !response.notification.request ||
+          !response.notification.request.content ||
+          !response.notification.request.content.data ||
+          !response.notification.request.content.data.body
+        ) {
+          return;
+        }
+
+        const body = response.notification.request.content.data.body;
+        if (!body.bookingData) return;
+        const { bookingData } = body;
+
+        if (bookingData) {
+          notificationReceived(bookingData);
+        }
       }
     );
 
@@ -301,8 +269,8 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     };
   }, []);
 
-  const onCancel = () => {
-    updateCoords(undefined);
+  const onUpdateRoute = (coords: [Coords] | undefined) => {
+    updateCoords(coords);
   };
 
   return (
@@ -314,23 +282,44 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         ref={mapRef}
         zoomEnabled={true}
       >
-        {coords &&
-          coords.length > 1 &&
-          coords.map((coord, index) => {
-            if (index === 0 || index === coords.length - 1) {
-              return (
-                <Marker
-                  key={index}
-                  coordinate={{
-                    latitude: coord.latitude ?? 0,
-                    longitude: coord?.longitude ?? 0,
-                  }}
-                >
-                  <MarkerDot />
-                </Marker>
-              );
-            }
-          })}
+        {coords && coords.length > 1 && (
+          <Polyline
+            key={Math.random()}
+            strokeWidth={4}
+            strokeColor="#2ECB70"
+            coordinates={coords ? coords : []}
+          />
+        )}
+        {currentBooking &&
+          currentBooking.sourceAddress &&
+          currentBooking.sourceAddress.location && (
+            <Marker
+              key={"source"}
+              coordinate={{
+                latitude: currentBooking.sourceAddress.location.lat,
+                longitude: currentBooking.sourceAddress.location.lng,
+              }}
+            >
+              <FontAwesome
+                name="map-pin"
+                size={28}
+                color={Color.Button.Background}
+              />
+            </Marker>
+          )}
+        {currentBooking &&
+          currentBooking.destinationAddress &&
+          currentBooking.destinationAddress.location && (
+            <Marker
+              key={"destination"}
+              coordinate={{
+                latitude: currentBooking.destinationAddress.location.lat,
+                longitude: currentBooking.destinationAddress.location.lng,
+              }}
+            >
+              <FontAwesome name="map-pin" size={28} color="red" />
+            </Marker>
+          )}
       </Map>
       {currentBooking &&
         (currentBooking.status === BookingState.DRIVER_ASSIGNED ||
@@ -339,7 +328,7 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           <WhereToWrapper>
             <BookingView
               bookingId={currentBooking?.id ?? ""}
-              updateRoute={() => {}}
+              updateRoute={onUpdateRoute}
             />
           </WhereToWrapper>
         )}
@@ -348,9 +337,7 @@ export const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         currentBooking.status === BookingState.REQUESTED && (
           <BookingNotification
             bookingId={currentBooking.id}
-            sourceAddress={currentBooking.sourceAddress.readable}
-            destAdress={currentBooking.destinationAddress.readable}
-            bookingType={currentBooking.type}
+            onCancel={onUpdateRoute}
           />
         )}
       <MenuButtonWrapper>

@@ -1,3 +1,5 @@
+import * as Location from "expo-location";
+
 import Axios from "axios";
 import { Point } from "react-native-google-places-autocomplete";
 import polyline from "@mapbox/polyline";
@@ -29,4 +31,16 @@ export const getPolyline = async (source: Point, destination: Point) => {
   });
 
   return coordinates;
+};
+
+
+export const getCurrentLocation = async () => {
+  const location = await Location.getCurrentPositionAsync({
+    enableHighAccuracy: true,
+  });
+
+  return {
+    lat: location.coords.latitude,
+    lng: location.coords.longitude,
+  };
 };
